@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Liceo N° 4 Horacio Quiroga - Registro de Asistencia</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f4f8;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #1E3A8A;
+    }
+    form {
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 500px;
+      margin: 0 auto 20px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    input {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    button {
+      margin-top: 15px;
+      width: 100%;
+      background: #2563EB;
+      color: #fff;
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover {
+      background: #1E40AF;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 30px;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #ccc;
+      text-align: center;
+    }
+    th {
+      background: #1E3A8A;
+      color: white;
+    }
+    .admin-section {
+      display: none;
+      margin-top: 20px;
+      text-align: center;
+    }
+    .export-btn {
+      background: #16A34A;
+      margin-top: 10px;
+    }
+    .export-btn:hover {
+      background: #15803D;
+    }
+    .clear-btn {
+      background: #DC2626;
+      margin-top: 10px;
+    }
+    .clear-btn:hover {
+      background: #B91C1C;
+    }
+  </style>
+</head>
+<body>
+  <h1>📘 Liceo N° 4 Horacio Quiroga <br> Registro de Asistencia a Coordinación</h1>
+
+  <form id="formAsistencia">
+    <label for="nombre">Nombre y Apellido:</label>
+    <input type="text" id="nombre" required>
+
+    <label for="asignatura">Asignatura:</label>
+    <input type="text" id="asignatura" required>
+
+    <label for="fecha">Fecha:</label>
+    <input type="date" id="fecha" required>
+
+    <label for="hora">Hora:</label>
+    <input type="time" id="hora" required>
+
+    <button type="submit">Registrar Asistencia</button>
+  </form>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Nombre y Apellido</th>
+        <th>Asignatura</th>
+        <th>Fecha</th>
+        <th>Hora</th>
+      </tr>
+    </thead>
+    <tbody id="listaAsistencia"></tbody>
+  </table>
+
+  <!-- Sección solo para administrador -->
+  <div class="admin-section" id="adminSection">
+    <button class="export-btn" onclick="exportarExcel()">📥 Exportar a Excel</button>
+    <button class="clear-btn" onclick="limpiarRegistros()">🗑️ Borrar Histórico</button>
+  </div>
+
+  <!-- Botón para iniciar sesión como admin -->
+  <div style="text-align:center; margin-top:20px;">
+    <button onclick="accederAdmin()">🔑 Acceso Administrador</button>
+  </div>
+
+  <!-- Librería SheetJS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+  <script>
+    const form = document.getElementById('formAsistencia');
+    const listaAsistencia = document.getElementById('listaAsistencia');
+    const adminSection = document.getElementById('adminSection');
+
+    // Recuperar datos guardados en LocalStorage
+    let registros = JSON.parse(localStorage.getItem('asistencias')) || [];
+
+    function mostrarRegistros() {
+      listaAsistencia.innerHTML = '';
+      registros.forEach(reg => {
+        const fila = `<tr>
+          <td>${reg.nombre}</td>
+          <td>${reg.asignatura}</td>
+          <td>${reg.fecha}</td>
+          <td>${reg.hora}</td>
+        </tr>`;
+        listaAsistencia.innerHTML += fila;
+      });
+    }
+
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      const nuevoRegistro = {
+        nombre: document.getElementById('nombre').value,
+        asignatura: document.getElementById('asignatura').value,
+        fecha: document.getElementById('fecha').value,
+        hora: document.getElementById('hora').value
+      };
+      registros.push(nuevoRegistro);
+
+      // Guardar en LocalStorage
+      localStorage.setItem('asistencias', JSON.stringify(registros));
+
+      mostrarRegistros();
+      form.reset();
+    });
+
+    function exportarExcel() {
+      if (registros.length === 0) {
+        alert("No hay registros para exportar.");
+        return;
+      }
+      const ws = XLSX.utils.json_to_sheet(registros);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Asistencias");
+      XLSX.writeFile(wb, "Asistencia_Liceo4.xlsx");
+    }
+
+    function limpiarRegistros() {
+      if (confirm("¿Seguro que deseas borrar todo el histórico de asistencias?")) {
+        registros = [];
+        localStorage.removeItem('asistencias');
+        mostrarRegistros();
+      }
+    }
+
+    function accederAdmin() {
+      const clave = prompt("Ingrese la clave de administrador:");
+      if (clave === "admin123") {  // Puedes cambiar la clave aquí
+        adminSection.style.display = "block";
+        alert("Acceso concedido al modo administrador ✅");
+      } else {
+        alert("Clave incorrecta ❌");
+      }
+    }
+
+    // Mostrar al cargar la página
+    mostrarRegistros();
+  </script>
+</body>
+</html>
